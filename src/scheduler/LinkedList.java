@@ -1,124 +1,181 @@
 package scheduler;
 
-public class LinkedList<T> {
+import javax.swing.JOptionPane;
 
-    private Node<T> head;
-    private Node<T> tail;
+public class LinkedList<T extends Event> {
 
-    public void add(T value) {
+	private Node<T> head;
+	private Node<T> tail;
 
-        if (head == null) {
-            head = new Node<T>(value);
-        } else {
+	public void add(T value) {
 
-            Node<T> prev = head;
-            Node<T> next = head.getNext();
+		if (head == null) {
+			head = new Node<T>(value);
+		} else {
 
-            while (next != null) {
-                prev = prev.getNext();
-                next = next.getNext();
-            }
+			Node<T> prev = head;
+			Node<T> next = head.getNext();
 
-            next = new Node<T>(value);
-            prev.setNext(next);
-            next.setPrev(prev);
-            tail = next;
-        }
-    }
+			while (next != null) {
+				prev = prev.getNext();
+				next = next.getNext();
+			}
 
-    public void remove(int position) {
+			next = new Node<T>(value);
+			prev.setNext(next);
+			next.setPrev(prev);
+			tail = next;
+		}
+	}
 
-        if (head == null) {
-            System.out.println("No items to remove!");
-        } else if (position == 0) {
+	public void insert(T value) throws SchedulingConflictException {
 
-            head = head.getNext();
+		String time = ((Event) value).eventTime;
+		Node<T> inserted = new Node<T>(value);
+		Node<T> current = head;
+		if (head == null) {
+			add(value);
+			System.out.println("head null");
+			return;
+		}
+		while (current != null) {
+			String currentTime = ((Event) current.getValue()).eventTime;
+			if (currentTime.compareToIgnoreCase(time) < 0) {
+				System.out.println("-1");
+				if (current.getNext() == null) {
+					current.setNext(inserted);
+					inserted.setPrev(current);
+					tail = inserted;
+					break;
+				}
+				// time greater than currentTime
+			} else if ((currentTime.compareToIgnoreCase(time) > 0)) {
+				System.out.println("1");
+				if (current.getPrev() != null) {
+					current.getPrev().setNext(inserted);
+				} else {
+					head = inserted;
+				}
+				current.setPrev(inserted);
+				inserted.setNext(current);
+				break;
 
-            if (head != null) {
-                head.setPrev(null);
-            }
+			} else if ((currentTime.compareToIgnoreCase(time) == 0)) {
+				throw new SchedulingConflictException();
+			}
+			current = current.getNext();
+		}
 
-        } else {
+	}
 
-            int positionCounter = 1;
-            Node<T> prev = head;
-            Node<T> next = head.getNext();
+	public void remover(String event) {
+		int positionCounter = 0;
+		Node<T> current = head;
+		while (current != null) {
+			if (current.getValue().eventName.equalsIgnoreCase(event)) {
+				break;
+			}
+			positionCounter += 1;
+			current = current.getNext();
+		}
+		remove(positionCounter);
+	}
 
-            while (positionCounter < position) {
+	public void remove(int position) {
 
-                prev = prev.getNext();
-                next = next.getNext();
-                positionCounter++;
+		if (head == null) {
+			System.out.println("No items to remove!");
+		} else if (position == 0) {
 
-            }
+			head = head.getNext();
 
-            if (positionCounter == position && next != null) {
+			if (head != null) {
+				head.setPrev(null);
+			}
 
-                next = next.getNext();
-                prev.setNext(next);
+		} else {
 
-                if (next != null) {
-                    next.setPrev(prev);
-                }
-            } else {
-                System.out.println("Position not found!");
-            }
-        }
+			int positionCounter = 1;
+			Node<T> prev = head;
+			Node<T> next = head.getNext();
 
-    }
+			while (positionCounter < position) {
 
-    public void print() {
-        if (head == null) {
-            System.out.println("No items in list!");
-        } else {
+				prev = prev.getNext();
+				next = next.getNext();
+				positionCounter++;
 
-            Node<T> next = head;
+			}
 
-            while (next != null) {
+			if (positionCounter == position && next != null) {
 
-                System.out.print(next.getValue().toString() + " <-> ");
-                next = next.getNext();
+				next = next.getNext();
+				prev.setNext(next);
 
-            }
+				if (next != null) {
+					next.setPrev(prev);
+				}
+			} else {
+				System.out.println("Position not found!");
+			}
+		}
 
-            System.out.println();
+	}
 
-        }
+	public void print() {
+		if (head == null) {
+			System.out.println("No items in list!");
+		} else {
 
-    }
+			Node<T> next = head;
+			String bigString = " ";
 
-    public int size() {
-        int size = 0;
-        if (head != null) {
+			while (next != null) {
 
-            Node<T> next = head;
+				bigString = bigString + (next.getValue().toString() + "\n ");
 
-            while (next != null) {
+				next = next.getNext();
 
-                next = next.getNext();
-                size++;
+			}
+			JOptionPane.showMessageDialog(Scheduler.getFrame(), bigString);
+			System.out.println();
 
-            }
+		}
 
-        }
-        return size;
+	}
 
-    }
+	public int size() {
+		int size = 0;
+		if (head != null) {
 
-    public Node<T> getHead() {
-        return head;
-    }
+			Node<T> next = head;
 
-    public Node<T> getTail() {
-        return tail;
-    }
+			while (next != null) {
 
-    public void setHead(Node<T> head) {
-        this.head = head;
-    }
+				next = next.getNext();
+				size++;
 
-    public void setTail(Node<T> tail) {
-        this.tail = tail;
-    }
+			}
+
+		}
+		return size;
+
+	}
+
+	public Node<T> getHead() {
+		return head;
+	}
+
+	public Node<T> getTail() {
+		return tail;
+	}
+
+	public void setHead(Node<T> head) {
+		this.head = head;
+	}
+
+	public void setTail(Node<T> tail) {
+		this.tail = tail;
+	}
 
 }
